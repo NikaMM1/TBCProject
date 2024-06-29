@@ -1,6 +1,7 @@
 
 from ext import db
 from flask_login import UserMixin
+
 def register_user(username, password):
     new_user = User(username=username, password=password)  
     db.session.add(new_user)
@@ -9,9 +10,10 @@ def register_user(username, password):
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
+    
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, )
-    password_hash = db.Column(db.String(128), )
+    username = db.Column(db.String(80), unique=True,)
+    password = db.Column(db.String(120), )
     is_admin = db.Column(db.Boolean, default=True)
 
 class MenuItem(db.Model):

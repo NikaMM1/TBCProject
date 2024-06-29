@@ -13,7 +13,6 @@ def index():
 def menu():
     menu_items = MenuItem.query.all()
     return render_template('menu.html', menu_items=menu_items)
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -26,13 +25,12 @@ def register():
         register_user(username, password)
         return 'User registered successfully', 201
     return render_template('register.html', form=form)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and user.check_password(form.password.data):
+        if user and user.password == form.password.data:
             login_user(user)
             return redirect(url_for('index'))
         else:
