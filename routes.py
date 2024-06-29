@@ -117,13 +117,13 @@ def add_to_cart(item_id):
     if 'cart' not in session:
         session['cart'] = []
     
-    # Check if the item is already in the cart
+    
     for cart_item in session['cart']:
         if cart_item.get('item_id') == item.id:
             flash(f"{item.name} is already in the cart.", 'info')
             return redirect(url_for('menu'))
 
-    # Add item to the cart
+    
     session['cart'].append({
         'item_id': item.id, 
         'name': item.name,
