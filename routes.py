@@ -4,7 +4,6 @@ from ext import app, db, login_manager
 from models import User, Order, MenuItem, register_user
 from forms import RegisterForm, LoginForm, OrderForm
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -13,6 +12,7 @@ def index():
 def menu():
     menu_items = MenuItem.query.all()
     return render_template('menu.html', menu_items=menu_items)
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -25,6 +25,7 @@ def register():
         register_user(username, password)
         return 'User registered successfully', 201
     return render_template('register.html', form=form)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -51,36 +52,36 @@ def load_user(user_id):
 @login_required
 def order():
     form = OrderForm()
+
     if form.validate_on_submit():
-        new_order = Order(
-            email=form.email.data,
-            address=form.address.data,
-            card_number=form.card_number.data,
-            food_item=form.food_item.data,
-            card_name=form.card_name.data,
-            expiration_date=form.expiration_date.data,
-            cvv=form.cvv.data
-        )
-        db.session.add(new_order)
-        db.session.commit()
-        session.pop('cart', None)
-        flash('Order submitted successfully.', 'success')
-        return redirect(url_for('index'))
-    
+        current_app.logger.info("Form validated successfully")
+        try:
+            new_order = Order(
+                email=form.email.data,
+                address=form.address.data,
+                card_number=form.card_number.data,
+                food_item=form.food_item.data,
+                card_name=form.card_name.data,
+                cvv=form.cvv.data,
+                
+            )
+            db.session.add(new_order)
+            db.session.commit()
+            session.pop('cart', None)
+            flash('Order placed successfully.', 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            current_app.logger.error(f"Error: {e}")
+            flash('An error occurred while placing the order.', 'danger')
+            db.session.rollback()
+    else:
+        
+        current_app.logger.info(f"Form validation failed. Errors: {form.errors}")
+        flash('Form validation failed. Please check the input fields.', 'danger')
+
     cart_items = session.get('cart', [])
-    for item in cart_items:
-        if 'item_id' not in item:
-            item['item_id'] = None
-        if 'name' not in item:
-            item['name'] = ''
-        if 'description' not in item:
-            item['description'] = ''
-        if 'price' not in item:
-            item['price'] = 0.0
-        if 'image_url' not in item:
-            item['image_url'] = ''
-    
-    current_app.logger.info(f"Cart items before rendering order.html: {cart_items}")
+    current_app.logger.info(f"Cart items: {cart_items}")
+
     return render_template('order.html', form=form, cart_items=cart_items)
 
 @app.route('/admin/orders')
@@ -115,12 +116,10 @@ def add_to_cart(item_id):
     if 'cart' not in session:
         session['cart'] = []
     
-    
     for cart_item in session['cart']:
         if cart_item.get('item_id') == item.id:
             flash(f"{item.name} is already in the cart.", 'info')
             return redirect(url_for('menu'))
-
     
     session['cart'].append({
         'item_id': item.id, 
@@ -147,4 +146,4 @@ def remove_from_cart(item_id):
         session.modified = True
         flash('Item removed from cart successfully.', 'success')
     
-    return redirect(url_for('menu'))
+    return redirect(url_for('order'))
